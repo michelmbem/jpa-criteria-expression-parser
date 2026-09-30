@@ -20,6 +20,7 @@ public final class CriteriaExpression {
             CriteriaBuilder criteriaBuilder,
             Root<T> root,
             String expression) {
+
         return toPredicate(entityManager, criteriaBuilder, root,
                 expression, Collections.emptyMap());
     }

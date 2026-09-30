@@ -14,28 +14,26 @@ import java.util.Map;
 
 public final class CriteriaExpressionConverter {
 
-    private final CriteriaBuilder cb;
+    private final CriteriaBuilder criteriaBuilder;
     private final EntityManager entityManager;
     private final JpaPathResolver pathResolver;
-    private final ValueConverter valueConverter;
     private final Map<String, Object> parameters;
 
     public CriteriaExpressionConverter(
-            CriteriaBuilder cb,
+            CriteriaBuilder criteriaBuilder,
             EntityManager entityManager) {
 
-        this(cb, entityManager, Collections.emptyMap());
+        this(criteriaBuilder, entityManager, Collections.emptyMap());
     }
 
     public CriteriaExpressionConverter(
-            CriteriaBuilder cb,
+            CriteriaBuilder criteriaBuilder,
             EntityManager entityManager,
             Map<String, Object> parameters) {
 
-        this.cb = cb;
+        this.criteriaBuilder = criteriaBuilder;
         this.entityManager = entityManager;
         this.pathResolver = new JpaPathResolver(entityManager);
-        this.valueConverter = new ValueConverter(entityManager);
         this.parameters = parameters == null
                 ? Collections.emptyMap()
                 : parameters;
@@ -46,25 +44,20 @@ public final class CriteriaExpressionConverter {
             From<?, ?> root) {
 
         if (expression instanceof LogicalExpression) {
-            return convertLogical(
-                    (LogicalExpression) expression,
-                    root);
+            return convertLogical((LogicalExpression) expression,  root);
         }
 
         if (expression instanceof NotExpression) {
             NotExpression not = (NotExpression) expression;
-            return cb.not(toPredicate(not.getExpression(), root));
+            return criteriaBuilder.not(toPredicate(not.getExpression(), root));
         }
 
         if (expression instanceof ComparisonExpression) {
-            return convertComparison(
-                    (ComparisonExpression) expression,
-                    root);
+            return convertComparison((ComparisonExpression) expression, root);
         }
 
         throw new IllegalArgumentException(
-                "Unsupported expression node: "
-                        + expression.getClass().getName());
+                "Unsupported expression node: " + expression.getClass().getName());
     }
 
     private Predicate convertLogical(
@@ -74,8 +67,8 @@ public final class CriteriaExpressionConverter {
         Predicate left = toPredicate(expression.getLeft(), root);
         Predicate right = toPredicate(expression.getRight(), root);
         return expression.getOperator() == LogicalExpression.Operator.AND
-                ? cb.and(left, right)
-                : cb.or(left, right);
+                ? criteriaBuilder.and(left, right)
+                : criteriaBuilder.or(left, right);
     }
 
     private Predicate convertComparison(
@@ -89,11 +82,11 @@ public final class CriteriaExpressionConverter {
                 root.getJavaType(), expression.getProperty().getPath());
 
         switch (expression.getOperator()) {
-            case IS_NULL: return cb.isNull(path);
-            case IS_NOT_NULL: return cb.isNotNull(path);
-            case EQ: return cb.equal(
+            case IS_NULL: return criteriaBuilder.isNull(path);
+            case IS_NOT_NULL: return criteriaBuilder.isNotNull(path);
+            case EQ: return criteriaBuilder.equal(
                     path, convert(expression.getValue(), attribute));
-            case NE: return cb.notEqual(
+            case NE: return criteriaBuilder.notEqual(
                     path, convert(expression.getValue(), attribute));
             case LT: return compare(
                     path, attribute, expression.getValue(), ComparisonOperator.LT);
@@ -103,10 +96,10 @@ public final class CriteriaExpressionConverter {
                     path, attribute, expression.getValue(), ComparisonOperator.GT);
             case GE: return compare(
                     path, attribute, expression.getValue(), ComparisonOperator.GE);
-            case LIKE: return cb.like(
+            case LIKE: return criteriaBuilder.like(
                     stringExpression(path),
                     String.valueOf(convert(expression.getValue(), attribute)));
-            case NOT_LIKE: return cb.not(cb.like(
+            case NOT_LIKE: return criteriaBuilder.not(criteriaBuilder.like(
                     stringExpression(path),
                     String.valueOf(convert(expression.getValue(), attribute))));
             case IN: return createIn(
@@ -174,12 +167,11 @@ public final class CriteriaExpressionConverter {
         Comparable comparableValue = (Comparable) value;
 
         switch (operator) {
-            case LT: return cb.lessThan(expression, comparableValue);
-            case LE: return cb.lessThanOrEqualTo(expression, comparableValue);
-            case GT: return cb.greaterThan(expression, comparableValue);
-            case GE: return cb.greaterThanOrEqualTo(expression, comparableValue);
-            default: throw new IllegalArgumentException(
-                    "Not an ordered comparison: " + operator);
+            case LT: return criteriaBuilder.lessThan(expression, comparableValue);
+            case LE: return criteriaBuilder.lessThanOrEqualTo(expression, comparableValue);
+            case GT: return criteriaBuilder.greaterThan(expression, comparableValue);
+            case GE: return criteriaBuilder.greaterThanOrEqualTo(expression, comparableValue);
+            default: throw new IllegalArgumentException("Not an ordered comparison: " + operator);
         }
     }
 
@@ -192,7 +184,7 @@ public final class CriteriaExpressionConverter {
         Object lower = convert(expression.getValue(), attribute);
         Object upper = convert(expression.getSecondValue(), attribute);
         Predicate predicate = betweenComparable(path, lower, upper);
-        return negate ? cb.not(predicate) : predicate;
+        return negate ? criteriaBuilder.not(predicate) : predicate;
     }
 
     @SuppressWarnings({
@@ -207,7 +199,7 @@ public final class CriteriaExpressionConverter {
         javax.persistence.criteria.Expression<? extends Comparable> expression =
                 (javax.persistence.criteria.Expression<? extends Comparable>) path;
 
-        return cb.between(expression, (Comparable) lower, (Comparable) upper);
+        return criteriaBuilder.between(expression, (Comparable) lower, (Comparable) upper);
     }
 
     private Predicate createIn(
@@ -216,13 +208,13 @@ public final class CriteriaExpressionConverter {
             ListExpression list,
             boolean negate) {
 
-        CriteriaBuilder.In<Object> in = cb.in(path);
+        CriteriaBuilder.In<Object> in = criteriaBuilder.in(path);
 
         for (Expression expression : list.getValues()) {
             in.value(convert(expression, attribute));
         }
 
-        return negate ? cb.not(in) : in;
+        return negate ? criteriaBuilder.not(in) : in;
     }
 
     private Object convert(
@@ -244,7 +236,7 @@ public final class CriteriaExpressionConverter {
             throw new IllegalArgumentException("Expected literal or parameter");
         }
 
-        return valueConverter.convertForAttribute(raw, attribute);
+        return ValueConverter.convertForAttribute(raw, attribute);
     }
 
     private Attribute<?, ?> resolveAttribute(
@@ -256,12 +248,12 @@ public final class CriteriaExpressionConverter {
         Attribute<?, ?> attribute = null;
 
         for (int i = 0; i < parts.length; i++) {
-            ManagedType<?> managed = entityManager
+            ManagedType<?> managedType = entityManager
                     .getMetamodel()
                     .managedType(currentType);
 
             try {
-                attribute = managed.getAttribute(parts[i]);
+                attribute = managedType.getAttribute(parts[i]);
             } catch (IllegalArgumentException e) {
                 throw new IllegalArgumentException("Unknown property '"
                         + parts[i]

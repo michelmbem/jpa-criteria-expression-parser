@@ -1,6 +1,5 @@
 package org.addy.persistence.criteria.converter;
 
-import javax.persistence.EntityManager;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 import javax.persistence.metamodel.Attribute;
@@ -15,14 +14,7 @@ import java.util.Date;
 
 public final class ValueConverter {
 
-    private final EntityManager entityManager;
-
-    public ValueConverter(EntityManager entityManager) {
-        if (entityManager == null) {
-            throw new IllegalArgumentException("entityManager cannot be null");
-        }
-
-        this.entityManager = entityManager;
+    private ValueConverter() {
     }
 
     /**
@@ -32,7 +24,7 @@ public final class ValueConverter {
      * @param attribute the JPA metamodel attribute
      * @return the converted value
      */
-    public Object convertForAttribute(Object value, Attribute<?, ?> attribute) {
+    public static Object convertForAttribute(Object value, Attribute<?, ?> attribute) {
         if (attribute == null) {
             throw new IllegalArgumentException("attribute cannot be null");
         }
@@ -48,7 +40,7 @@ public final class ValueConverter {
      * @param targetType target Java type
      * @param temporalType @Temporal mapping, when applicable
      */
-    public Object convert(
+    public static Object convert(
             Object value,
             Class<?> targetType,
             TemporalType temporalType) {
@@ -156,7 +148,7 @@ public final class ValueConverter {
      *
      * Both field access and property access are supported.
      */
-    private TemporalType findTemporalType(Attribute<?, ?> attribute) {
+    private static TemporalType findTemporalType(Attribute<?, ?> attribute) {
         Class<?> declaringType = attribute.getDeclaringType().getJavaType();
         String propertyName = attribute.getName();
 
@@ -188,7 +180,7 @@ public final class ValueConverter {
     /**
      * Finds a field in the class hierarchy.
      */
-    private Field findField(Class<?> type, String propertyName) {
+    private static Field findField(Class<?> type, String propertyName) {
         Class<?> current = type;
 
         while (current != null && current != Object.class) {
@@ -210,7 +202,7 @@ public final class ValueConverter {
      *     getCreatedAt()
      *     isActive()
      */
-    private Method findGetter(Class<?> type, String propertyName) {
+    private static Method findGetter(Class<?> type, String propertyName) {
         if (propertyName == null || propertyName.isEmpty()) {
             return null;
         }
@@ -240,7 +232,7 @@ public final class ValueConverter {
         return null;
     }
 
-    private Object convertCharacter(Object value) {
+    private static Object convertCharacter(Object value) {
         if (value instanceof Character) {
             return value;
         }
@@ -254,7 +246,7 @@ public final class ValueConverter {
         return text.charAt(0);
     }
 
-    private Boolean convertBoolean(Object value) {
+    private static Boolean convertBoolean(Object value) {
         if (value instanceof Boolean) {
             return (Boolean) value;
         }
@@ -273,7 +265,7 @@ public final class ValueConverter {
                 "Cannot convert '" + text + "' to Boolean");
     }
 
-    private Object convertNumber(
+    private static Object convertNumber(
             Object value,
             Class<?> targetType) {
 
@@ -324,7 +316,7 @@ public final class ValueConverter {
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
-    private Object convertEnum(Object value, Class<?> targetType) {
+    private static Object convertEnum(Object value, Class<?> targetType) {
         if (targetType.isInstance(value)) {
             return value;
         }
@@ -342,7 +334,7 @@ public final class ValueConverter {
         }
     }
 
-    private Object convertDate(
+    private static Object convertDate(
             Object value,
             Class<?> targetType,
             TemporalType temporalType) {
@@ -401,7 +393,7 @@ public final class ValueConverter {
         return convertUtilDate(value);
     }
 
-    private java.sql.Date convertSqlDate(Object value) {
+    private static java.sql.Date convertSqlDate(Object value) {
         if (value instanceof java.sql.Date) {
             return (java.sql.Date) value;
         }
@@ -420,7 +412,7 @@ public final class ValueConverter {
         }
     }
 
-    private Time convertSqlTime(Object value) {
+    private static Time convertSqlTime(Object value) {
         if (value instanceof Time) {
             return (Time) value;
         }
@@ -439,7 +431,7 @@ public final class ValueConverter {
         }
     }
 
-    private Timestamp convertTimestamp(Object value) {
+    private static Timestamp convertTimestamp(Object value) {
         if (value instanceof Timestamp) {
             return (Timestamp) value;
         }
@@ -473,7 +465,7 @@ public final class ValueConverter {
         }
     }
 
-    private Date convertUtilDate(Object value) {
+    private static Date convertUtilDate(Object value) {
         if (value instanceof Date) {
             return (Date) value;
         }
@@ -510,7 +502,7 @@ public final class ValueConverter {
         }
     }
 
-    private Date convertUtilDateTime(Object value) {
+    private static Date convertUtilDateTime(Object value) {
         if (value instanceof Date) {
             return (Date) value;
         }
@@ -548,7 +540,7 @@ public final class ValueConverter {
         }
     }
 
-    private LocalDate convertLocalDate(Object value) {
+    private static LocalDate convertLocalDate(Object value) {
         if (value instanceof LocalDate) {
             return (LocalDate) value;
         }
@@ -570,7 +562,7 @@ public final class ValueConverter {
         }
     }
 
-    private LocalDateTime convertLocalDateTime(Object value) {
+    private static LocalDateTime convertLocalDateTime(Object value) {
         if (value instanceof LocalDateTime) {
             return (LocalDateTime) value;
         }
@@ -591,7 +583,7 @@ public final class ValueConverter {
         }
     }
 
-    private LocalTime convertLocalTime(Object value) {
+    private static LocalTime convertLocalTime(Object value) {
         if (value instanceof LocalTime) {
             return (LocalTime) value;
         }
@@ -606,7 +598,7 @@ public final class ValueConverter {
         }
     }
 
-    private Instant convertInstant(Object value) {
+    private static Instant convertInstant(Object value) {
         if (value instanceof Instant) {
             return (Instant) value;
         }
@@ -626,7 +618,7 @@ public final class ValueConverter {
         }
     }
 
-    private OffsetDateTime convertOffsetDateTime(Object value) {
+    private static OffsetDateTime convertOffsetDateTime(Object value) {
         if (value instanceof OffsetDateTime) {
             return (OffsetDateTime) value;
         }
@@ -641,7 +633,7 @@ public final class ValueConverter {
         }
     }
 
-    private ZonedDateTime convertZonedDateTime(Object value) {
+    private static ZonedDateTime convertZonedDateTime(Object value) {
         if (value instanceof ZonedDateTime) {
             return (ZonedDateTime) value;
         }
@@ -656,7 +648,7 @@ public final class ValueConverter {
         }
     }
 
-    private Class<?> box(Class<?> type) {
+    private static Class<?> box(Class<?> type) {
         if (!type.isPrimitive()) {
             return type;
         }
