@@ -1,4 +1,6 @@
-package org.addy.persistence.criteria;
+package org.addy.persistence.criteria.parser;
+
+import org.addy.persistence.criteria.expression.*;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -168,10 +170,9 @@ public final class ExpressionParser {
         List<Expression> values = new ArrayList<>();
 
         if (!check(TokenType.RPAREN)) {
-            values.add(parseValue());
-            while (match(TokenType.COMMA)) {
+            do {
                 values.add(parseValue());
-            }
+            } while (match(TokenType.COMMA));
         }
 
         expect(TokenType.RPAREN);

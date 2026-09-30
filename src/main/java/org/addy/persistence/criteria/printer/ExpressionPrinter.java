@@ -1,4 +1,6 @@
-package org.addy.persistence.criteria;
+package org.addy.persistence.criteria.printer;
+
+import org.addy.persistence.criteria.expression.*;
 
 public final class ExpressionPrinter {
     private ExpressionPrinter() {}

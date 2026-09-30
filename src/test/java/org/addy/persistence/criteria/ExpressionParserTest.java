@@ -1,5 +1,8 @@
 package org.addy.persistence.criteria;
 
+import org.addy.persistence.criteria.expression.*;
+import org.addy.persistence.criteria.parser.ExpressionParseException;
+import org.addy.persistence.criteria.parser.ExpressionParser;
 import org.junit.Test;
 
 import static org.junit.Assert.*;

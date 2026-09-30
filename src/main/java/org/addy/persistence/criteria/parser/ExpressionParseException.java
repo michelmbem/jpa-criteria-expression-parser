@@ -1,4 +1,4 @@
-package org.addy.persistence.criteria;
+package org.addy.persistence.criteria.parser;
 
 public class ExpressionParseException extends IllegalArgumentException {
     private final int position;

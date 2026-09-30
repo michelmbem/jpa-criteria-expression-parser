@@ -1,4 +1,4 @@
-package org.addy.persistence.criteria;
+package org.addy.persistence.criteria.expression;
 
 public final class LogicalExpression implements Expression {
     public enum Operator { AND, OR }

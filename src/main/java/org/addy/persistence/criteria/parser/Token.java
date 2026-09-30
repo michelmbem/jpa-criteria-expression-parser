@@ -1,4 +1,4 @@
-package org.addy.persistence.criteria;
+package org.addy.persistence.criteria.parser;
 
 public final class Token {
     private final TokenType type;

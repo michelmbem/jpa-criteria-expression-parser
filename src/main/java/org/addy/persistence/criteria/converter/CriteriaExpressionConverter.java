@@ -1,4 +1,6 @@
-package org.addy.persistence.criteria;
+package org.addy.persistence.criteria.converter;
+
+import org.addy.persistence.criteria.expression.*;
 
 import javax.persistence.EntityManager;
 import javax.persistence.criteria.CriteriaBuilder;
@@ -22,7 +24,7 @@ public final class CriteriaExpressionConverter {
             CriteriaBuilder cb,
             EntityManager entityManager) {
 
-        this(cb, entityManager, Collections.<String, Object>emptyMap());
+        this(cb, entityManager, Collections.emptyMap());
     }
 
     public CriteriaExpressionConverter(
@@ -50,10 +52,8 @@ public final class CriteriaExpressionConverter {
         }
 
         if (expression instanceof NotExpression) {
-            NotExpression e = (NotExpression) expression;
-
-            return cb.not(
-                    toPredicate(e.getExpression(), root));
+            NotExpression not = (NotExpression) expression;
+            return cb.not(toPredicate(not.getExpression(), root));
         }
 
         if (expression instanceof ComparisonExpression) {
@@ -71,134 +71,53 @@ public final class CriteriaExpressionConverter {
             LogicalExpression expression,
             From<?, ?> root) {
 
-        Predicate left =
-                toPredicate(expression.getLeft(), root);
-
-        Predicate right =
-                toPredicate(expression.getRight(), root);
-
-        if (expression.getOperator()
-                == LogicalExpression.Operator.AND) {
-
-            return cb.and(left, right);
-        }
-
-        return cb.or(left, right);
+        Predicate left = toPredicate(expression.getLeft(), root);
+        Predicate right = toPredicate(expression.getRight(), root);
+        return expression.getOperator() == LogicalExpression.Operator.AND
+                ? cb.and(left, right)
+                : cb.or(left, right);
     }
 
     private Predicate convertComparison(
             ComparisonExpression expression,
             From<?, ?> root) {
 
-        Path<?> path =
-                pathResolver.resolve(
-                        root,
-                        expression.getProperty().getPath());
+        Path<?> path = pathResolver.resolve(
+                root, expression.getProperty().getPath());
 
-        Attribute<?, ?> attribute =
-                resolveAttribute(
-                        root.getJavaType(),
-                        expression.getProperty().getPath());
+        Attribute<?, ?> attribute = resolveAttribute(
+                root.getJavaType(), expression.getProperty().getPath());
 
         switch (expression.getOperator()) {
-
-            case IS_NULL:
-                return cb.isNull(path);
-
-            case IS_NOT_NULL:
-                return cb.isNotNull(path);
-
-            case EQ:
-                return cb.equal(
-                        path,
-                        convert(
-                                expression.getValue(),
-                                attribute));
-
-            case NE:
-                return cb.notEqual(
-                        path,
-                        convert(
-                                expression.getValue(),
-                                attribute));
-
-            case LT:
-                return compare(
-                        path,
-                        attribute,
-                        expression.getValue(),
-                        ComparisonOperator.LT);
-
-            case LE:
-                return compare(
-                        path,
-                        attribute,
-                        expression.getValue(),
-                        ComparisonOperator.LE);
-
-            case GT:
-                return compare(
-                        path,
-                        attribute,
-                        expression.getValue(),
-                        ComparisonOperator.GT);
-
-            case GE:
-                return compare(
-                        path,
-                        attribute,
-                        expression.getValue(),
-                        ComparisonOperator.GE);
-
-            case LIKE:
-                return cb.like(
-                        stringExpression(path),
-                        String.valueOf(
-                                convert(
-                                        expression.getValue(),
-                                        attribute)));
-
-            case NOT_LIKE:
-                return cb.not(
-                        cb.like(
-                                stringExpression(path),
-                                String.valueOf(
-                                        convert(
-                                                expression.getValue(),
-                                                attribute))));
-
-            case IN:
-                return createIn(
-                        path,
-                        attribute,
-                        (ListExpression) expression.getValue(),
-                        false);
-
-            case NOT_IN:
-                return createIn(
-                        path,
-                        attribute,
-                        (ListExpression) expression.getValue(),
-                        true);
-
-            case BETWEEN:
-                return createBetween(
-                        path,
-                        attribute,
-                        expression,
-                        false);
-
-            case NOT_BETWEEN:
-                return createBetween(
-                        path,
-                        attribute,
-                        expression,
-                        true);
-
+            case IS_NULL: return cb.isNull(path);
+            case IS_NOT_NULL: return cb.isNotNull(path);
+            case EQ: return cb.equal(
+                    path, convert(expression.getValue(), attribute));
+            case NE: return cb.notEqual(
+                    path, convert(expression.getValue(), attribute));
+            case LT: return compare(
+                    path, attribute, expression.getValue(), ComparisonOperator.LT);
+            case LE: return compare(
+                    path, attribute, expression.getValue(), ComparisonOperator.LE);
+            case GT: return compare(
+                    path, attribute, expression.getValue(), ComparisonOperator.GT);
+            case GE: return compare(
+                    path, attribute, expression.getValue(), ComparisonOperator.GE);
+            case LIKE: return cb.like(
+                    stringExpression(path),
+                    String.valueOf(convert(expression.getValue(), attribute)));
+            case NOT_LIKE: return cb.not(cb.like(
+                    stringExpression(path),
+                    String.valueOf(convert(expression.getValue(), attribute))));
+            case IN: return createIn(
+                    path, attribute, (ListExpression) expression.getValue(), false);
+            case NOT_IN:return createIn(
+                    path, attribute, (ListExpression) expression.getValue(), true);
+            case BETWEEN: return createBetween(path, attribute, expression, false);
+            case NOT_BETWEEN: return createBetween(path, attribute, expression, true);
             default:
                 throw new IllegalStateException(
-                        "Unsupported operator: "
-                                + expression.getOperator());
+                        "Unsupported operator: " + expression.getOperator());
         }
     }
 
@@ -222,24 +141,18 @@ public final class CriteriaExpressionConverter {
             ComparisonOperator operator) {
 
         Class<?> type = box(path.getJavaType());
-
-        Object value =
-                convert(valueExpression, attribute);
+        Object value = convert(valueExpression, attribute);
 
         if (!Comparable.class.isAssignableFrom(type)) {
-            throw new IllegalArgumentException(
-                    "Property '"
-                            + attribute.getName()
-                            + "' of type "
-                            + type.getName()
-                            + " cannot be used with an ordered "
-                            + "comparison operator");
+            throw new IllegalArgumentException("Property '"
+                    + attribute.getName()
+                    + "' of type "
+                    + type.getName()
+                    + " cannot be used with an ordered "
+                    + "comparison operator");
         }
 
-        return compareComparable(
-                path,
-                value,
-                operator);
+        return compareComparable(path, value, operator);
     }
 
     @SuppressWarnings({
@@ -257,13 +170,11 @@ public final class CriteriaExpressionConverter {
          * bound to the rest of the converter.
          */
         javax.persistence.criteria.Expression<? extends Comparable> expression =
-                (javax.persistence.criteria.Expression<? extends Comparable>)
-                        (javax.persistence.criteria.Expression<?>) path;
+                (javax.persistence.criteria.Expression<? extends Comparable>) path;
 
         Comparable comparableValue = (Comparable) value;
 
         switch (operator) {
-
             case LT:
                 return cb.lessThan(
                         expression,
@@ -286,8 +197,7 @@ public final class CriteriaExpressionConverter {
 
             default:
                 throw new IllegalArgumentException(
-                        "Not an ordered comparison: "
-                                + operator);
+                        "Not an ordered comparison: " + operator);
         }
     }
 

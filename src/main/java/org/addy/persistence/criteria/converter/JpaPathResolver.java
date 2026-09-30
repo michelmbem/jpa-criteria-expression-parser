@@ -1,4 +1,4 @@
-package org.addy.persistence.criteria;
+package org.addy.persistence.criteria.converter;
 
 import javax.persistence.EntityManager;
 import javax.persistence.criteria.From;
@@ -20,10 +20,9 @@ public final class JpaPathResolver {
 
         for (int i = 0; i < parts.length; i++) {
             String property = parts[i];
-
             ManagedType<?> managedType = managedType(currentType);
-
             Attribute<?, ?> attribute;
+
             try {
                 attribute = managedType.getAttribute(property);
             } catch (IllegalArgumentException e) {

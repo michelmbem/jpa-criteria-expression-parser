@@ -1,10 +1,9 @@
-package org.addy.persistence.criteria;
+package org.addy.persistence.criteria.converter;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 import javax.persistence.metamodel.Attribute;
-import javax.persistence.metamodel.ManagedType;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.Timestamp;

@@ -1,4 +1,4 @@
-package org.addy.persistence.criteria;
+package org.addy.persistence.criteria.expression;
 
 import java.util.Collections;
 import java.util.List;

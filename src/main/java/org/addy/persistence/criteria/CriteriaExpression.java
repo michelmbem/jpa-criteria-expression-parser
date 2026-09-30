@@ -1,5 +1,9 @@
 package org.addy.persistence.criteria;
 
+import org.addy.persistence.criteria.converter.CriteriaExpressionConverter;
+import org.addy.persistence.criteria.expression.Expression;
+import org.addy.persistence.criteria.parser.ExpressionParser;
+
 import javax.persistence.EntityManager;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.Predicate;
@@ -17,7 +21,7 @@ public final class CriteriaExpression {
             Root<T> root,
             String expression) {
         return toPredicate(entityManager, criteriaBuilder, root,
-            expression, Collections.<String, Object>emptyMap());
+                expression, Collections.emptyMap());
     }
 
     public static <T> Predicate toPredicate(
