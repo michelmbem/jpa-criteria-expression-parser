@@ -1,0 +1,176 @@
+# ============================================================
+# Maven
+# ============================================================
+
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+.flattened-pom.xml
+
+# Maven wrapper
+# Keep mvnw and mvnw.cmd and .mvn/wrapper/maven-wrapper.properties
+.mvn/wrapper/maven-wrapper.jar
+
+
+# ============================================================
+# Java
+# ============================================================
+
+*.class
+*.jar
+*.war
+*.ear
+
+# Exception: if you intentionally commit third-party JARs,
+# remove *.jar and use a dedicated lib/ directory instead.
+
+
+# ============================================================
+# IntelliJ IDEA
+# ============================================================
+
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# IntelliJ artifacts
+out/
+
+
+# ============================================================
+# Eclipse
+# ============================================================
+
+.classpath
+.project
+.settings/
+.factorypath
+.buildpath
+
+# Eclipse metadata
+.metadata/
+
+
+# ============================================================
+# VS Code
+# ============================================================
+
+.vscode/
+
+
+# ============================================================
+# JBoss / WildFly
+# ============================================================
+
+# JBoss/WildFly server installation
+jboss/
+wildfly/
+
+# JBoss deployment markers
+*.deployed
+*.failed
+*.isdeploying
+*.pending
+*.undeployed
+*.dodeploy
+*.skipdeploy
+
+# JBoss generated deployment metadata
+*.lastUpdated
+
+# Server logs
+server.log
+boot.log
+audit.log
+
+# JBoss/WildFly runtime directories
+standalone/data/
+standalone/log/
+standalone/tmp/
+standalone/deployments/
+
+domain/data/
+domain/log/
+domain/tmp/
+domain/deployments/
+
+# JBoss configuration backups
+standalone/configuration/*.last
+domain/configuration/*.last
+
+
+# ============================================================
+# Application server generated files
+# ============================================================
+
+logs/
+log/
+*.log
+
+tmp/
+temp/
+
+*.pid
+*.lck
+
+
+# ============================================================
+# Java application generated files
+# ============================================================
+
+hs_err_pid*
+replay_pid*
+*.hprof
+
+
+# ============================================================
+# OS generated files
+# ============================================================
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# macOS directory attributes
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+Desktop.ini
+
+# Windows installer files
+*.msi
+*.cab
+
+
+# ============================================================
+# Docker
+# ============================================================
+
+# Local environment files
+.env
+.env.example
+!.env.example
+
+
+# ============================================================
+# Miscellaneous
+# ============================================================
+
+*.swp
+*.swo
+*~
