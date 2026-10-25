@@ -7,11 +7,53 @@
     <groupId>org.addy</groupId>
     <artifactId>jpa-criteria-expression-parser</artifactId>
     <version>1.0.0</version>
+    <description>Parser d'expressions textuelles vers JPA Criteria API</description>
+
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <distribution>repo</distribution>
+            <url>https://www.apache.org/licenses/LICENSE-2.0.html</url>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <id>michelmbem</id>
+            <name>Michel Mbem</name>
+            <email>michel.mbem@gmail.com</email>
+            <roles>
+                <role>developer</role>
+            </roles>
+            <timezone>America/Toronto</timezone>
+            <properties>
+                <picUrl>https://avatars.githubusercontent.com/u/25884918?v=4</picUrl>
+            </properties>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>https://github.com/michelmbem/jpa-criteria-expression-parser.git</connection>
+        <tag>HEAD</tag>
+        <url>https://github.com/michelmbem/jpa-criteria-expression-parser</url>
+    </scm>
+
+    <distributionManagement>
+        <repository>
+            <id>github</id>
+            <name>GitHub Packages</name>
+            <url>https://maven.pkg.github.com/michelmbem/jpa-criteria-expression-parser</url>
+        </repository>
+        <snapshotRepository>
+            <id>github</id>
+            <name>GitHub Packages Snapshots</name>
+            <url>https://maven.pkg.github.com/michelmbem/jpa-criteria-expression-parser</url>
+        </snapshotRepository>
+    </distributionManagement>
 
     <properties>
-        <maven.compiler.source>8</maven.compiler.source>
-        <maven.compiler.target>8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.release>8</maven.compiler.release>
     </properties>
 
     <dependencies>
