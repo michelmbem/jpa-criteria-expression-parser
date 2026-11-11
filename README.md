@@ -74,7 +74,7 @@ Root<User> root = query.from(User.class);
 
 Predicate predicate = CriteriaExpression.toPredicate(
         entityManager, cb, root,
-        "age BETWEEN ?1 AND ?2 AND status = ?3,
+        "age BETWEEN ?1 AND ?2 AND status = ?3",
         18, 65, UserStatus.ACTIVE);
 
 query.where(predicate);
