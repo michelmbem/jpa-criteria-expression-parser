@@ -36,7 +36,7 @@ public final class CriteriaExpression {
 
         CriteriaExpressionConverter converter =
             new CriteriaExpressionConverter(
-                criteriaBuilder, entityManager, parameters);
+                    entityManager, criteriaBuilder, parameters);
 
         return converter.toPredicate(ast, root);
     }

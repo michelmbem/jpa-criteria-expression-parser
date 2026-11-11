@@ -16,9 +16,8 @@ public final class ExpressionParser {
     }
 
     public static Expression parse(String expression) {
-        ExpressionParser parser =
-            new ExpressionParser(new ExpressionLexer(expression).tokenize());
-
+        ExpressionLexer lexer = new ExpressionLexer(expression);
+        ExpressionParser parser = new ExpressionParser(lexer.tokenize());
         Expression result = parser.parseOr();
         parser.expect(TokenType.EOF);
         return result;
@@ -51,10 +50,9 @@ public final class ExpressionParser {
     }
 
     private Expression parseNot() {
-        if (match(TokenType.NOT)) {
-            return new NotExpression(parseNot());
-        }
-        return parsePrimary();
+        return match(TokenType.NOT)
+                ? new NotExpression(parseNot())
+                : parsePrimary();
     }
 
     private Expression parsePrimary() {
@@ -63,6 +61,7 @@ public final class ExpressionParser {
             expect(TokenType.RPAREN);
             return expression;
         }
+
         return parseComparison();
     }
 
@@ -105,9 +104,7 @@ public final class ExpressionParser {
                 lower, upper);
         }
 
-        if (not) {
-            throw error("Expected LIKE, IN or BETWEEN after NOT");
-        }
+        if (not) throw error("Expected LIKE, IN or BETWEEN after NOT");
 
         Token operator = consume();
         ComparisonExpression.Operator op;
@@ -119,9 +116,7 @@ public final class ExpressionParser {
             case LE: op = ComparisonExpression.Operator.LE; break;
             case GT: op = ComparisonExpression.Operator.GT; break;
             case GE: op = ComparisonExpression.Operator.GE; break;
-            default:
-                throw error("Expected comparison operator, found "
-                    + operator.getText());
+            default: throw error("Expected comparison operator, found " + operator.getText());
         }
 
         return new ComparisonExpression(property, op, parseValue());
@@ -139,27 +134,21 @@ public final class ExpressionParser {
             case STRING:
                 consume();
                 return new LiteralExpression(token.getText());
-
             case NUMBER:
                 consume();
                 return new LiteralExpression(parseNumber(token.getText()));
-
             case TRUE:
                 consume();
                 return new LiteralExpression(Boolean.TRUE);
-
             case FALSE:
                 consume();
                 return new LiteralExpression(Boolean.FALSE);
-
             case NULL:
                 consume();
                 return new LiteralExpression(null);
-
             case PARAMETER:
                 consume();
                 return new ParameterExpression(token.getText());
-
             default:
                 throw error("Expected value, found " + token.getText());
         }
@@ -180,9 +169,7 @@ public final class ExpressionParser {
     }
 
     private Number parseNumber(String text) {
-        if (text.indexOf('.') >= 0) {
-            return new BigDecimal(text);
-        }
+        if (text.indexOf('.') >= 0) return new BigDecimal(text);
 
         try {
             return Integer.valueOf(text);
@@ -208,10 +195,8 @@ public final class ExpressionParser {
     }
 
     private Token expect(TokenType type) {
-        if (!check(type)) {
-            throw error("Expected " + type + ", found " + peek());
-        }
-        return consume();
+        if (check(type)) return consume();
+        throw error("Expected " + type + ", found " + peek());
     }
 
     private Token consume() {

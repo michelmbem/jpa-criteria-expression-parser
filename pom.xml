@@ -6,7 +6,7 @@
 
     <groupId>org.addy</groupId>
     <artifactId>jpa-criteria-expression-parser</artifactId>
-    <version>1.0.0</version>
+    <version>1.1.0</version>
     <description>Parser d'expressions textuelles vers JPA Criteria API</description>
 
     <licenses>

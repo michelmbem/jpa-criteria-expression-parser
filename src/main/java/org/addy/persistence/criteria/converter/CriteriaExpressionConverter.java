@@ -10,39 +10,41 @@ import javax.persistence.criteria.Predicate;
 import javax.persistence.metamodel.Attribute;
 import javax.persistence.metamodel.ManagedType;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public final class CriteriaExpressionConverter {
 
-    private final CriteriaBuilder criteriaBuilder;
     private final EntityManager entityManager;
+    private final CriteriaBuilder criteriaBuilder;
     private final JpaPathResolver pathResolver;
-    private final Map<String, Object> parameters;
+    private final Map<String, Object> namedParameters;
 
-    public CriteriaExpressionConverter(
-            CriteriaBuilder criteriaBuilder,
-            EntityManager entityManager) {
+    public CriteriaExpressionConverter(EntityManager entityManager,
+                                       CriteriaBuilder criteriaBuilder) {
 
-        this(criteriaBuilder, entityManager, Collections.emptyMap());
+        this(entityManager, criteriaBuilder, Collections.emptyMap());
     }
 
-    public CriteriaExpressionConverter(
-            CriteriaBuilder criteriaBuilder,
-            EntityManager entityManager,
-            Map<String, Object> parameters) {
+    public CriteriaExpressionConverter(EntityManager entityManager,
+                                       CriteriaBuilder criteriaBuilder,
+                                       List<Object> parameters) {
 
-        this.criteriaBuilder = criteriaBuilder;
+        this(entityManager, criteriaBuilder, list2Map(parameters));
+    }
+
+    public CriteriaExpressionConverter(EntityManager entityManager,
+                                       CriteriaBuilder criteriaBuilder,
+                                       Map<String, Object> parameters) {
+
         this.entityManager = entityManager;
+        this.criteriaBuilder = criteriaBuilder;
         this.pathResolver = new JpaPathResolver(entityManager);
-        this.parameters = parameters == null
-                ? Collections.emptyMap()
-                : parameters;
+        this.namedParameters = parameters == null ? Collections.emptyMap() : parameters;
     }
 
-    public Predicate toPredicate(
-            Expression expression,
-            From<?, ?> root) {
-
+    public Predicate toPredicate(Expression expression, From<?, ?> root) {
         if (expression instanceof LogicalExpression) {
             return convertLogical((LogicalExpression) expression,  root);
         }
@@ -60,10 +62,7 @@ public final class CriteriaExpressionConverter {
                 "Unsupported expression node: " + expression.getClass().getName());
     }
 
-    private Predicate convertLogical(
-            LogicalExpression expression,
-            From<?, ?> root) {
-
+    private Predicate convertLogical(LogicalExpression expression, From<?, ?> root) {
         Predicate left = toPredicate(expression.getLeft(), root);
         Predicate right = toPredicate(expression.getRight(), root);
         return expression.getOperator() == LogicalExpression.Operator.AND
@@ -71,10 +70,7 @@ public final class CriteriaExpressionConverter {
                 : criteriaBuilder.or(left, right);
     }
 
-    private Predicate convertComparison(
-            ComparisonExpression expression,
-            From<?, ?> root) {
-
+    private Predicate convertComparison(ComparisonExpression expression, From<?, ?> root) {
         Path<?> path = pathResolver.resolve(
                 root, expression.getProperty().getPath());
 
@@ -136,12 +132,8 @@ public final class CriteriaExpressionConverter {
         Object value = convert(valueExpression, attribute);
 
         if (!Comparable.class.isAssignableFrom(type)) {
-            throw new IllegalArgumentException("Property '"
-                    + attribute.getName()
-                    + "' of type "
-                    + type.getName()
-                    + " cannot be used with an ordered "
-                    + "comparison operator");
+            throw new IllegalArgumentException("Property '" + attribute.getName() + "' of type "
+                    + type.getName() + " cannot be used with an ordered " + "comparison operator");
         }
 
         return compareComparable(path, value, operator);
@@ -151,11 +143,7 @@ public final class CriteriaExpressionConverter {
             "rawtypes",
             "unchecked"
     })
-    private Predicate compareComparable(
-            Path<?> path,
-            Object value,
-            ComparisonOperator operator) {
-
+    private Predicate compareComparable(Path<?> path, Object value, ComparisonOperator operator) {
         /*
          * Using raw Comparable here is intentional and localized.
          * It avoids exposing the CriteriaBuilder's recursive generic
@@ -175,11 +163,8 @@ public final class CriteriaExpressionConverter {
         }
     }
 
-    private Predicate createBetween(
-            Path<?> path,
-            Attribute<?, ?> attribute,
-            ComparisonExpression expression,
-            boolean negate) {
+    private Predicate createBetween(Path<?> path, Attribute<?, ?> attribute,
+                                    ComparisonExpression expression, boolean negate) {
 
         Object lower = convert(expression.getValue(), attribute);
         Object upper = convert(expression.getSecondValue(), attribute);
@@ -191,22 +176,15 @@ public final class CriteriaExpressionConverter {
             "rawtypes",
             "unchecked"
     })
-    private Predicate betweenComparable(
-            Path<?> path,
-            Object lower,
-            Object upper) {
-
+    private Predicate betweenComparable(Path<?> path, Object lower, Object upper) {
         javax.persistence.criteria.Expression<? extends Comparable> expression =
                 (javax.persistence.criteria.Expression<? extends Comparable>) path;
 
         return criteriaBuilder.between(expression, (Comparable) lower, (Comparable) upper);
     }
 
-    private Predicate createIn(
-            Path<?> path,
-            Attribute<?, ?> attribute,
-            ListExpression list,
-            boolean negate) {
+    private Predicate createIn(Path<?> path, Attribute<?, ?> attribute,
+                               ListExpression list, boolean negate) {
 
         CriteriaBuilder.In<Object> in = criteriaBuilder.in(path);
 
@@ -217,21 +195,17 @@ public final class CriteriaExpressionConverter {
         return negate ? criteriaBuilder.not(in) : in;
     }
 
-    private Object convert(
-            Expression expression,
-            Attribute<?, ?> attribute) {
-
+    private Object convert(Expression expression, Attribute<?, ?> attribute) {
         Object raw;
 
         if (expression instanceof LiteralExpression) {
             raw = ((LiteralExpression) expression).getValue();
         } else if (expression instanceof ParameterExpression) {
-            String name = ((ParameterExpression) expression).getName();
-            if (!parameters.containsKey(name)) {
-                throw new IllegalArgumentException(
-                        "Missing expression parameter :" + name);
-            }
-            raw = parameters.get(name);
+            ParameterExpression param = (ParameterExpression) expression;
+            String name = param.getName();
+            if (!namedParameters.containsKey(name))
+                throw new IllegalArgumentException("Missing expression parameter :" + name);
+            raw = namedParameters.get(name);
         } else {
             throw new IllegalArgumentException("Expected literal or parameter");
         }
@@ -292,6 +266,16 @@ public final class CriteriaExpressionConverter {
         if (type == char.class) return Character.class;
 
         return type;
+    }
+
+    private static Map<String, Object> list2Map(List<Object> values) {
+        Map<String, Object> map = new HashMap<>();
+
+        for (int i = 0; i < values.size(); ++i) {
+            map.put(String.valueOf(i + 1), values.get(i));
+        }
+
+        return map;
     }
 
     private enum ComparisonOperator {

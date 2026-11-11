@@ -27,8 +27,7 @@ public final class JpaPathResolver {
                 attribute = managedType.getAttribute(property);
             } catch (IllegalArgumentException e) {
                 throw new IllegalArgumentException(
-                    "Unknown property '" + property
-                    + "' in path '" + pathExpression + "'", e);
+                        "Unknown property '" + property + "' in path '" + pathExpression + "'", e);
             }
 
             path = path.get(property);
@@ -46,8 +45,7 @@ public final class JpaPathResolver {
             return entityManager.getMetamodel().managedType(type);
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException(
-                "Type '" + type.getName()
-                + "' cannot be traversed as an entity or embeddable", e);
+                "Type '" + type.getName() + "' cannot be traversed as an entity or embeddable", e);
         }
     }
 }
