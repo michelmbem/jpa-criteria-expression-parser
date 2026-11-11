@@ -1,12 +1,12 @@
 # JPA Criteria Expression Parser
 
-Parser d'expressions textuelles vers JPA Criteria API, sans bibliothèque externe.
+A parser for converting text-based expressions into the JPA Criteria API, with no external dependencies.
 
-Cible principale : Java 8+ / JPA 2.x (`javax.persistence`), notamment WildFly 26.1.3.
+Primary target: Java 8+ / JPA 2.x (`javax.persistence`), specifically tested with WildFly 26.1.3.
 
-## Syntaxe
+## Syntax
 
-Supporté :
+Supported features:
 
 - `=`, `!=`, `<>`, `<`, `<=`, `>`, `>=`
 - `LIKE`, `NOT LIKE`
@@ -14,38 +14,39 @@ Supporté :
 - `BETWEEN`, `NOT BETWEEN`
 - `IS NULL`, `IS NOT NULL`
 - `AND`, `OR`, `NOT`
-- parenthèses
-- chaînes `'...'`, avec `''` pour une apostrophe
-- nombres entiers et décimaux
+- Parentheses
+- Strings (enclosed in `'...'`, with `''` used to represent an apostrophe)
+- Integers and decimal numbers
 - `true`, `false`, `null`
-- propriétés imbriquées : `customer.address.city`
-- paramètres nommés : `:minAge`, `:status`
+- Nested properties: `customer.address.city`
+- Positional parameters: `?1`, `?2`
+- Named parameters: `:minAge`, `:status`
 
-Exemples :
+Examples:
 
-```text
+```hql
 age BETWEEN 18 AND 65
 age NOT BETWEEN 18 AND 65
 name LIKE 'Mic%'
 status IN ('ACTIVE', 'PENDING')
 customer.address.city = 'Quebec'
 (age >= 18 AND active = true) OR status = 'ADMIN'
+age BETWEEN ?1 AND ?2 AND status = ?3
 age BETWEEN :minAge AND :maxAge AND status = :status
 ```
 
-La priorité est :
+Operator precedence:
 
-```text
+```hql
 NOT
 AND
 OR
 ```
 
-## Utilisation
+## Usage
 
 ```java
 CriteriaBuilder cb = entityManager.getCriteriaBuilder();
-
 CriteriaQuery<User> query = cb.createQuery(User.class);
 Root<User> root = query.from(User.class);
 
@@ -55,31 +56,43 @@ parameters.put("maxAge", 65);
 parameters.put("status", UserStatus.ACTIVE);
 
 Predicate predicate = CriteriaExpression.toPredicate(
-    entityManager,
-    cb,
-    root,
-    "age BETWEEN :minAge AND :maxAge AND status = :status",
-    parameters
-);
+        entityManager, cb, root,
+        "age BETWEEN :minAge AND :maxAge AND status = :status",
+        parameters);
 
 query.where(predicate);
 
-List<User> users = entityManager
-    .createQuery(query)
-    .getResultList();
+List<User> users = entityManager.createQuery(query).getResultList();
 ```
 
-## Métamodèle JPA
+Or with positional parameters
 
-Le convertisseur utilise `EntityManager.getMetamodel()` pour :
+```java
+CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+CriteriaQuery<User> query = cb.createQuery(User.class);
+Root<User> root = query.from(User.class);
 
-- vérifier que les propriétés existent ;
-- déterminer leur type Java ;
-- traverser les associations ;
-- traverser les `@Embeddable` ;
-- convertir les littéraux vers le type réel de l'attribut.
+Predicate predicate = CriteriaExpression.toPredicate(
+        entityManager, cb, root,
+        "age BETWEEN ?1 AND ?2 AND status = ?3,
+        18, 65, UserStatus.ACTIVE);
 
-Les types pris en charge incluent notamment :
+query.where(predicate);
+
+List<User> users = entityManager.createQuery(query).getResultList();
+```
+
+## JPA Metamodel
+
+The converter uses `EntityManager.getMetamodel()` to:
+
+- verify that properties exist;
+- determine their Java type;
+- traverse associations;
+- traverse `@Embeddable` types;
+- convert literals to the actual type of the attribute.
+
+Supported types include, among others:
 
 - `String`
 - `Boolean` / `boolean`
@@ -96,35 +109,47 @@ Les types pris en charge incluent notamment :
 - `OffsetDateTime`
 - `ZonedDateTime`
 
-Pour `java.util.Date`, l'annotation `@Temporal` est inspectée afin de distinguer `DATE`, `TIME` et `TIMESTAMP`.
+For `java.util.Date`, the `@Temporal` annotation is inspected to distinguish between `DATE`, `TIME`, and `TIMESTAMP`.
 
 ## Structure
 
 ```text
-src/main/java/org/addy/bookstore/criteria/
-    TokenType.java
-    Token.java
-    ExpressionLexer.java
-    Expression.java
-    LiteralExpression.java
-    PropertyExpression.java
-    ListExpression.java
-    ComparisonExpression.java
-    LogicalExpression.java
-    NotExpression.java
-    ExpressionParser.java
-    JpaPathResolver.java
-    ValueConverter.java
-    CriteriaExpressionConverter.java
-    CriteriaExpression.java
-    ExpressionParseException.java
-
-src/test/java/
-    ExpressionParserTest.java
+.
+├── pom.xml
+├── README.md
+├── NOTES.md
+└── src
+    ├── main
+    │   └── java/org/addy/persistence/criteria
+    │       ├── CriteriaExpression.java
+    │       ├── converter
+    │       │   ├── CriteriaExpressionConverter.java
+    │       │   ├── JpaPathResolver.java
+    │       │   └── ValueConverter.java
+    │       ├── expression
+    │       │   ├── ComparisonExpression.java
+    │       │   ├── Expression.java
+    │       │   ├── ListExpression.java
+    │       │   ├── LiteralExpression.java
+    │       │   ├── LogicalExpression.java
+    │       │   ├── NotExpression.java
+    │       │   ├── ParameterExpression.java
+    │       │   └── PropertyExpression.java
+    │       ├── parser
+    │       │   ├── ExpressionLexer.java
+    │       │   ├── ExpressionParseException.java
+    │       │   ├── ExpressionParser.java
+    │       │   ├── Token.java
+    │       │   └── TokenType.java
+    │       └── printer
+    │           └── ExpressionPrinter.java
+    └── test
+        └── java/org/addy/persistence/criteria
+            └── ExpressionParserTest.java
 ```
 
-## Remarque
+## Note
 
-Le parser produit un AST indépendant de JPA. Cela permet de tester la syntaxe sans `EntityManager`, puis de convertir l'AST en `Predicate` seulement au moment de construire la requête.
+The parser produces an AST that is independent of JPA. This allows for testing the syntax without an `EntityManager`, and subsequently converting the AST into a `Predicate` only when building the query.
 
-Le support des paramètres `:name` est volontairement inclus : les valeurs peuvent ainsi être séparées de l'expression textuelle.
+Support for `?index` and`:name` parameters is intentionally included, allowing values to be kept separate from the textual expression.

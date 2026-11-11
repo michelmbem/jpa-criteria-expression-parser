@@ -10,8 +10,6 @@ import javax.persistence.criteria.Predicate;
 import javax.persistence.metamodel.Attribute;
 import javax.persistence.metamodel.ManagedType;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public final class CriteriaExpressionConverter {
@@ -20,19 +18,6 @@ public final class CriteriaExpressionConverter {
     private final CriteriaBuilder criteriaBuilder;
     private final JpaPathResolver pathResolver;
     private final Map<String, Object> namedParameters;
-
-    public CriteriaExpressionConverter(EntityManager entityManager,
-                                       CriteriaBuilder criteriaBuilder) {
-
-        this(entityManager, criteriaBuilder, Collections.emptyMap());
-    }
-
-    public CriteriaExpressionConverter(EntityManager entityManager,
-                                       CriteriaBuilder criteriaBuilder,
-                                       List<Object> parameters) {
-
-        this(entityManager, criteriaBuilder, list2Map(parameters));
-    }
 
     public CriteriaExpressionConverter(EntityManager entityManager,
                                        CriteriaBuilder criteriaBuilder,
@@ -266,16 +251,6 @@ public final class CriteriaExpressionConverter {
         if (type == char.class) return Character.class;
 
         return type;
-    }
-
-    private static Map<String, Object> list2Map(List<Object> values) {
-        Map<String, Object> map = new HashMap<>();
-
-        for (int i = 0; i < values.size(); ++i) {
-            map.put(String.valueOf(i + 1), values.get(i));
-        }
-
-        return map;
     }
 
     private enum ComparisonOperator {

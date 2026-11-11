@@ -8,36 +8,60 @@ import javax.persistence.EntityManager;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
-import java.util.Collections;
-import java.util.Map;
+import java.util.*;
 
 public final class CriteriaExpression {
     private CriteriaExpression() {
     }
 
-    public static <T> Predicate toPredicate(
-            EntityManager entityManager,
-            CriteriaBuilder criteriaBuilder,
-            Root<T> root,
-            String expression) {
+    public static <T> Predicate toPredicate(EntityManager entityManager,
+                                            CriteriaBuilder criteriaBuilder,
+                                            Root<T> root,
+                                            String expression) {
 
-        return toPredicate(entityManager, criteriaBuilder, root,
-                expression, Collections.emptyMap());
+        return toPredicate(entityManager, criteriaBuilder, root, expression,
+                Collections.emptyMap());
     }
 
-    public static <T> Predicate toPredicate(
-            EntityManager entityManager,
-            CriteriaBuilder criteriaBuilder,
-            Root<T> root,
-            String expression,
-            Map<String, Object> parameters) {
+    public static <T> Predicate toPredicate(EntityManager entityManager,
+                                            CriteriaBuilder criteriaBuilder,
+                                            Root<T> root,
+                                            String expression,
+                                            Object... parameters) {
+
+        return toPredicate(entityManager, criteriaBuilder, root, expression,
+                list2Map(Arrays.asList(parameters)));
+    }
+
+    public static <T> Predicate toPredicate(EntityManager entityManager,
+                                            CriteriaBuilder criteriaBuilder,
+                                            Root<T> root,
+                                            String expression,
+                                            List<Object> parameters) {
+
+        return toPredicate(entityManager, criteriaBuilder, root, expression,
+                list2Map(parameters));
+    }
+
+    public static <T> Predicate toPredicate(EntityManager entityManager,
+                                            CriteriaBuilder criteriaBuilder,
+                                            Root<T> root,
+                                            String expression,
+                                            Map<String, Object> parameters) {
 
         Expression ast = ExpressionParser.parse(expression);
-
-        CriteriaExpressionConverter converter =
-            new CriteriaExpressionConverter(
-                    entityManager, criteriaBuilder, parameters);
-
+        CriteriaExpressionConverter converter = new CriteriaExpressionConverter(
+                entityManager, criteriaBuilder, parameters);
         return converter.toPredicate(ast, root);
+    }
+
+    private static Map<String, Object> list2Map(List<Object> values) {
+        Map<String, Object> map = new HashMap<>();
+
+        for (int i = 0; i < values.size(); ++i) {
+            map.put(String.valueOf(i + 1), values.get(i));
+        }
+
+        return map;
     }
 }
