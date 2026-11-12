@@ -3,14 +3,17 @@ package org.addy.persistence.criteria;
 import org.addy.persistence.criteria.expression.*;
 import org.addy.persistence.criteria.parser.ExpressionParseException;
 import org.addy.persistence.criteria.parser.ExpressionParser;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.*;
+import java.math.BigDecimal;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class ExpressionParserTest {
 
     @Test
-    public void parsesBetweenAndLogicalAnd() {
+    void parsesBetweenAndLogicalAnd() {
         Expression e = ExpressionParser.parse("age BETWEEN 18 AND 65 AND active = true");
 
         assertTrue(e instanceof LogicalExpression);
@@ -26,15 +29,17 @@ public class ExpressionParserTest {
     }
 
     @Test
-    public void parsesNotBetween() {
+    void parsesNotBetween() {
         ComparisonExpression e = (ComparisonExpression)ExpressionParser
-                .parse("age NOT BETWEEN 18 AND 65");
+                .parse("salary NOT BETWEEN 1.5E2 AND 65000e-1");
 
         assertEquals(ComparisonExpression.Operator.NOT_BETWEEN, e.getOperator());
+        assertThat(((LiteralExpression)e.getValue()).getValue()).isInstanceOf(BigDecimal.class);
+        assertThat(((LiteralExpression)e.getSecondValue()).getValue()).isInstanceOf(BigDecimal.class);
     }
 
     @Test
-    public void parsesNestedProperty() {
+    void parsesNestedProperty() {
         PropertyExpression e = ((ComparisonExpression)ExpressionParser
                 .parse("customer.address.city = 'Quebec'"))
                 .getProperty();
@@ -43,7 +48,7 @@ public class ExpressionParserTest {
     }
 
     @Test
-    public void parsesPositionalParameters() {
+    void parsesPositionalParameters() {
         ComparisonExpression e = (ComparisonExpression)ExpressionParser
                 .parse("weight between ?1 and ?2");
 
@@ -52,7 +57,7 @@ public class ExpressionParserTest {
     }
 
     @Test
-    public void parsesNamedParameters() {
+    void parsesNamedParameters() {
         ComparisonExpression e = (ComparisonExpression)ExpressionParser
                 .parse("age BETWEEN :minAge AND :maxAge");
 
@@ -61,7 +66,7 @@ public class ExpressionParserTest {
     }
 
     @Test
-    public void parsesInList() {
+    void parsesInList() {
         ComparisonExpression e = (ComparisonExpression)ExpressionParser
                 .parse("status IN ('ACTIVE', 'PENDING')");
 
@@ -72,7 +77,7 @@ public class ExpressionParserTest {
     }
 
     @Test
-    public void parsesNotPrecedence() {
+    void parsesNotPrecedence() {
         Expression e = ExpressionParser.parse(
             "NOT active = false OR age >= 18 AND enabled = true");
 
@@ -80,13 +85,14 @@ public class ExpressionParserTest {
         assertEquals(LogicalExpression.Operator.OR, ((LogicalExpression)e).getOperator());
     }
 
-    @Test(expected = ExpressionParseException.class)
-    public void rejectsInvalidBetween() {
-        ExpressionParser.parse("age BETWEEN 18 65");
+    @Test
+    void rejectsInvalidBetween() {
+        assertThrows(ExpressionParseException.class,
+                () -> ExpressionParser.parse("age BETWEEN 18 65"));
     }
 
     @Test
-    public void parsesEscapedQuote() {
+    void parsesEscapedQuote() {
         ComparisonExpression e = (ComparisonExpression)ExpressionParser
                 .parse("name = 'O''Connor'");
 

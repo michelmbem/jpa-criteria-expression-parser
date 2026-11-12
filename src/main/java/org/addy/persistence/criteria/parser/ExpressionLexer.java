@@ -7,75 +7,77 @@ import java.util.Objects;
 
 public final class ExpressionLexer {
     private final String input;
+    private final int inputLength;
     private int position;
 
-    public ExpressionLexer(String input) {
-        this.input = Objects.requireNonNull(input, "input cannot be null");
+    public ExpressionLexer(String expression) {
+        input = Objects.requireNonNull(expression, "The expression cannot be null");
+        inputLength = input.length();
+        position = 0;
     }
 
     public List<Token> tokenize() {
-        List<Token> result = new ArrayList<>();
-        int limit = input.length();
+        List<Token> tokens = new ArrayList<>();
 
-        while (position < limit) {
+        while (position < inputLength) {
             char c = input.charAt(position);
-            
+
             switch (c) {
                 case '(':
-                    result.add(new Token(TokenType.LPAREN, "(", position++));
+                    tokens.add(new Token(TokenType.LPAREN, "(", position++));
                     break;
                 case ')':
-                    result.add(new Token(TokenType.RPAREN, ")", position++));
+                    tokens.add(new Token(TokenType.RPAREN, ")", position++));
                     break;
                 case ',':
-                    result.add(new Token(TokenType.COMMA, ",", position++));
+                    tokens.add(new Token(TokenType.COMMA, ",", position++));
                     break;
                 case '=':
-                    result.add(new Token(TokenType.EQ, "=", position++));
+                    tokens.add(new Token(TokenType.EQ, "=", position++));
                     break;
                 case '!':
-                    if (peek('=', limit)) {
-                        result.add(new Token(TokenType.NE, "!=", position));
+                    if (peek('=')) {
+                        tokens.add(new Token(TokenType.NE, "!=", position));
                         position += 2;
                         break;
                     }
                     throw error("Expected '=' after '!'");
                 case '<':
-                    if (peek('=', limit)) {
-                        result.add(new Token(TokenType.LE, "<=", position));
+                    if (peek('=')) {
+                        tokens.add(new Token(TokenType.LE, "<=", position));
                         position += 2;
-                    } else if (peek('>', limit)) {
-                        result.add(new Token(TokenType.NE, "<>", position));
+                    } else if (peek('>')) {
+                        tokens.add(new Token(TokenType.NE, "<>", position));
                         position += 2;
                     } else {
-                        result.add(new Token(TokenType.LT, "<", position++));
+                        tokens.add(new Token(TokenType.LT, "<", position++));
                     }
                     break;
                 case '>':
-                    if (peek('=', limit)) {
-                        result.add(new Token(TokenType.GE, ">=", position));
+                    if (peek('=')) {
+                        tokens.add(new Token(TokenType.GE, ">=", position));
                         position += 2;
                     } else {
-                        result.add(new Token(TokenType.GT, ">", position++));
+                        tokens.add(new Token(TokenType.GT, ">", position++));
                     }
                     break;
                 case '?':
-                    result.add(positionalParameter(limit));
+                    tokens.add(positionalParameter());
                     break;
                 case ':':
-                    result.add(namedParameter(limit));
+                    tokens.add(namedParameter());
                     break;
                 case '\'':
-                    result.add(literalString(limit));
+                    tokens.add(literalString());
                     break;
                 default:
                     if (Character.isWhitespace(c)) {
                         ++position;
-                    } else if (Character.isDigit(c) || (c == '-' && position + 1 < limit
+                    } else if (Character.isDigit(c) || (c == '-' && position + 1 < inputLength
                             && Character.isDigit(input.charAt(position + 1)))) {
-                        result.add(literalNumber(limit));
+                        tokens.add(literalNumber());
                     } else if (Character.isJavaIdentifierStart(c)) {
-                        result.add(identifier(limit));
+                        tokens.add(identifier());
                     } else {
                         throw error("Unexpected character '" + c + "'");
                     }
@@ -83,50 +85,50 @@ public final class ExpressionLexer {
             }
         }
 
-        result.add(new Token(TokenType.EOF, "", position));
-        return result;
+        tokens.add(new Token(TokenType.EOF, "", position));
+        return tokens;
     }
 
-    private boolean peek(char expected, int limit) {
+    private boolean peek(char expected) {
         int nextPosition = position + 1;
-        return nextPosition < limit && input.charAt(nextPosition) == expected;
+        return nextPosition < inputLength && input.charAt(nextPosition) == expected;
     }
 
-    private Token positionalParameter(int limit) {
+    private Token positionalParameter() {
         int start = position++; // skip the initial '?'
 
-        if (position >= limit || !Character.isDigit(input.charAt(position)))
-            throw error("Expected parameter number after '?'");
+        if (position >= inputLength || !Character.isDigit(input.charAt(position)))
+            throw error("Expected parameter index after '?'");
 
         int indexStart = position++;
-        while (position < limit && Character.isDigit(input.charAt(position)))
+        while (position < inputLength && Character.isDigit(input.charAt(position)))
             ++position;
 
         return new Token(TokenType.PARAMETER, input.substring(indexStart, position), start);
     }
 
-    private Token namedParameter(int limit) {
+    private Token namedParameter() {
         int start = position++; // skip the initial ':'
         
-        if (position >= limit || !Character.isJavaIdentifierStart(input.charAt(position)))
+        if (position >= inputLength || !Character.isJavaIdentifierStart(input.charAt(position)))
             throw error("Expected parameter name after ':'");
 
         int nameStart = position++;
-        while (position < limit && Character.isJavaIdentifierPart(input.charAt(position)))
+        while (position < inputLength && Character.isJavaIdentifierPart(input.charAt(position)))
             ++position;
 
         return new Token(TokenType.PARAMETER, input.substring(nameStart, position), start);
     }
 
-    private Token literalString(int limit) {
+    private Token literalString() {
         int start = position++; // skip the initial "'"
         StringBuilder value = new StringBuilder();
 
-        while (position < limit) {
+        while (position < inputLength) {
             char c = input.charAt(position++);
 
             if (c == '\'') {
-                if (position < limit && input.charAt(position) == '\'') {
+                if (position < inputLength && input.charAt(position) == '\'') {
                     value.append('\'');
                     ++position;
                     continue;
@@ -140,31 +142,45 @@ public final class ExpressionLexer {
         throw error("Unterminated string literal");
     }
 
-    private Token literalNumber(int limit) {
+    private Token literalNumber() {
         int start = position;
 
         if (input.charAt(position) == '-') ++position;
 
-        while (position < limit && Character.isDigit(input.charAt(position)))
+        while (position < inputLength && Character.isDigit(input.charAt(position)))
             ++position;
 
-        if (position < limit && input.charAt(position) == '.') {
+        if (position < inputLength && input.charAt(position) == '.') {
             ++position;
 
-            if (position >= limit || !Character.isDigit(input.charAt(position)))
+            if (position >= inputLength || !Character.isDigit(input.charAt(position)))
                 throw error("Expected digits after decimal point");
 
-            while (position < limit && Character.isDigit(input.charAt(position)))
+            while (position < inputLength && Character.isDigit(input.charAt(position)))
+                ++position;
+        }
+
+        if (position < inputLength && Character.toLowerCase(input.charAt(position)) == 'e') {
+            ++position;
+
+            if (position < inputLength &&
+                    (input.charAt(position) == '-' || input.charAt(position) == '+'))
+                ++position;
+
+            if (position >= inputLength || !Character.isDigit(input.charAt(position)))
+                throw error("Expected digits after exponent sign");
+
+            while (position < inputLength && Character.isDigit(input.charAt(position)))
                 ++position;
         }
 
         return new Token(TokenType.NUMBER, input.substring(start, position), start);
     }
 
-    private Token identifier(int limit) {
+    private Token identifier() {
         int start = position;
 
-        while (position < limit) {
+        while (position < inputLength) {
             char c = input.charAt(position);
             if (Character.isJavaIdentifierPart(c) || c == '.')
                 ++position;

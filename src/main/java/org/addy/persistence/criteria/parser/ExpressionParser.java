@@ -169,7 +169,8 @@ public final class ExpressionParser {
     }
 
     private Number parseNumber(String text) {
-        if (text.indexOf('.') >= 0) return new BigDecimal(text);
+        if (isDecimal(text))
+            return new BigDecimal(text);
 
         try {
             return Integer.valueOf(text);
@@ -209,5 +210,14 @@ public final class ExpressionParser {
 
     private ExpressionParseException error(String message) {
         return new ExpressionParseException(message, peek().getPosition());
+    }
+
+    private static boolean isDecimal(String text) {
+        for (int i = 0; i < text.length(); ++i) {
+            char c = text.charAt(i);
+            if (c == '.' || c == 'e' || c == 'E')
+                return true;
+        }
+        return false;
     }
 }
