@@ -17,7 +17,7 @@ public final class CriteriaExpressionConverter {
     private final EntityManager entityManager;
     private final CriteriaBuilder criteriaBuilder;
     private final JpaPathResolver pathResolver;
-    private final Map<String, Object> namedParameters;
+    private final Map<String, Object> parameters;
 
     public CriteriaExpressionConverter(EntityManager entityManager,
                                        CriteriaBuilder criteriaBuilder,
@@ -26,7 +26,7 @@ public final class CriteriaExpressionConverter {
         this.entityManager = entityManager;
         this.criteriaBuilder = criteriaBuilder;
         this.pathResolver = new JpaPathResolver(entityManager);
-        this.namedParameters = parameters == null ? Collections.emptyMap() : parameters;
+        this.parameters = parameters == null ? Collections.emptyMap() : parameters;
     }
 
     public Predicate toPredicate(Expression expression, From<?, ?> root) {
@@ -188,9 +188,9 @@ public final class CriteriaExpressionConverter {
         } else if (expression instanceof ParameterExpression) {
             ParameterExpression param = (ParameterExpression) expression;
             String name = param.getName();
-            if (!namedParameters.containsKey(name))
+            if (!parameters.containsKey(name))
                 throw new IllegalArgumentException("Missing expression parameter :" + name);
-            raw = namedParameters.get(name);
+            raw = parameters.get(name);
         } else {
             throw new IllegalArgumentException("Expected literal or parameter");
         }
