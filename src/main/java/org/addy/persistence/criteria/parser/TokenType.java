@@ -14,6 +14,7 @@ public enum TokenType {
     OR,
     NOT,
     LIKE,
+    ILIKE,
     IN,
     BETWEEN,
     IS,
@@ -24,6 +25,9 @@ public enum TokenType {
     LE,
     GT,
     GE,
+    STARTS_WITH,
+    ENDS_WITH,
+    CONTAINS,
 
     LPAREN,
     RPAREN,

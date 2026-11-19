@@ -1,14 +1,6 @@
 package org.addy.persistence.criteria.expression;
 
 public final class ComparisonExpression implements Expression {
-    public enum Operator {
-        EQ, NE, LT, LE, GT, GE,
-        LIKE, NOT_LIKE,
-        IN, NOT_IN,
-        BETWEEN, NOT_BETWEEN,
-        IS_NULL, IS_NOT_NULL
-    }
-
     private final PropertyExpression property;
     private final Operator operator;
     private final Expression value;
@@ -44,5 +36,15 @@ public final class ComparisonExpression implements Expression {
 
     public Expression getSecondValue() {
         return secondValue;
+    }
+
+    public enum Operator {
+        EQ, NE, LT, LE, GT, GE,
+        STARTS_WITH, ENDS_WITH, CONTAINS,
+        LIKE, NOT_LIKE,
+        ILIKE, NOT_ILIKE,
+        IN, NOT_IN,
+        BETWEEN, NOT_BETWEEN,
+        IS_NULL, IS_NOT_NULL
     }
 }

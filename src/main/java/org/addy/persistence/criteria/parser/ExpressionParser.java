@@ -86,6 +86,13 @@ public final class ExpressionParser {
                 parseValue());
         }
 
+        if (match(TokenType.ILIKE)) {
+            return new ComparisonExpression(property,
+                    not ? ComparisonExpression.Operator.NOT_ILIKE
+                            : ComparisonExpression.Operator.ILIKE,
+                    parseValue());
+        }
+
         if (match(TokenType.IN)) {
             return new ComparisonExpression(property,
                 not ? ComparisonExpression.Operator.NOT_IN
@@ -116,6 +123,9 @@ public final class ExpressionParser {
             case LE: op = ComparisonExpression.Operator.LE; break;
             case GT: op = ComparisonExpression.Operator.GT; break;
             case GE: op = ComparisonExpression.Operator.GE; break;
+            case STARTS_WITH: op = ComparisonExpression.Operator.STARTS_WITH; break;
+            case ENDS_WITH: op = ComparisonExpression.Operator.ENDS_WITH; break;
+            case CONTAINS: op = ComparisonExpression.Operator.CONTAINS; break;
             default: throw error("Expected comparison operator, found " + operator.getText());
         }
 

@@ -69,18 +69,37 @@ public final class CriteriaExpressionConverter {
             case LE: return compare(path, attribute, expression.getValue(), ComparisonOperator.LE);
             case GT: return compare(path, attribute, expression.getValue(), ComparisonOperator.GT);
             case GE: return compare(path, attribute, expression.getValue(), ComparisonOperator.GE);
-            case LIKE: return criteriaBuilder.like(
-                    criteriaBuilder.upper(stringExpression(path)),
-                    String.valueOf(convert(expression.getValue(), attribute)).toUpperCase());
-            case NOT_LIKE: return criteriaBuilder.not(criteriaBuilder.like(
-                    criteriaBuilder.upper(stringExpression(path)),
-                    String.valueOf(convert(expression.getValue(), attribute)).toUpperCase()));
+            case STARTS_WITH: return match(path, attribute, expression.getValue(), "%", null, true, false);
+            case ENDS_WITH: return match(path, attribute, expression.getValue(), null, "%", true, false);
+            case CONTAINS: return match(path, attribute, expression.getValue(), "%", "%", true, false);
+            case LIKE: return match(path, attribute, expression.getValue(), null, null, false, false);
+            case NOT_LIKE: return match(path, attribute, expression.getValue(), null, null, false, true);
+            case ILIKE: return match(path, attribute, expression.getValue(), null, null, true, false);
+            case NOT_ILIKE: return match(path, attribute, expression.getValue(), null, null, true, true);
             case IN: return createIn(path, attribute, (ListExpression) expression.getValue(), false);
             case NOT_IN:return createIn(path, attribute, (ListExpression) expression.getValue(), true);
             case BETWEEN: return createBetween(path, attribute, expression, false);
             case NOT_BETWEEN: return createBetween(path, attribute, expression, true);
             default: throw new IllegalStateException("Unsupported operator: " + expression.getOperator());
         }
+    }
+
+    private Predicate match(
+            Path<?> path,
+            Attribute<?, ?> attribute,
+            Expression valueExpression,
+            String prefix,
+            String suffix,
+            boolean caseInsensitive,
+            boolean negate) {
+
+        String pattern = String.valueOf(convert(valueExpression, attribute));
+        if (caseInsensitive) pattern = pattern.toUpperCase();
+        if (prefix != null) pattern = prefix + pattern;
+        if (suffix != null) pattern += suffix;
+
+        Predicate predicate = criteriaBuilder.like(stringExpression(path), pattern);
+        return negate ? criteriaBuilder.not(predicate) : predicate;
     }
 
     /*

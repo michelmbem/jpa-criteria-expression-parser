@@ -70,6 +70,27 @@ public final class ExpressionLexer {
                 case '\'':
                     tokens.add(literalString());
                     break;
+                case '^':
+                    if (peek('=')) {
+                        tokens.add(new Token(TokenType.STARTS_WITH, "^=", position));
+                        position += 2;
+                        break;
+                    }
+                    throw error("Expected '=' after '^'");
+                case '$':
+                    if (peek('=')) {
+                        tokens.add(new Token(TokenType.ENDS_WITH, "$=", position));
+                        position += 2;
+                        break;
+                    }
+                    throw error("Expected '=' after '$'");
+                case '~':
+                    if (peek('=')) {
+                        tokens.add(new Token(TokenType.CONTAINS, "~=", position));
+                        position += 2;
+                        break;
+                    }
+                    throw error("Expected '=' after '~'");
                 default:
                     if (Character.isWhitespace(c)) {
                         ++position;
@@ -198,6 +219,7 @@ public final class ExpressionLexer {
             case "OR": return TokenType.OR;
             case "NOT": return TokenType.NOT;
             case "LIKE": return TokenType.LIKE;
+            case "ILIKE": return TokenType.ILIKE;
             case "IN": return TokenType.IN;
             case "BETWEEN": return TokenType.BETWEEN;
             case "IS": return TokenType.IS;
