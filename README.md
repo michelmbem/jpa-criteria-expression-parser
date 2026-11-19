@@ -8,8 +8,8 @@ Primary target: Java 8+ / JPA 2.x (`javax.persistence`), specifically tested wit
 
 Supported features:
 
-- `=`, `!=`, `<>`, `<`, `<=`, `>`, `>=`
-- `LIKE`, `NOT LIKE`
+- `=`, `!=`, `<>`, `<`, `<=`, `>`, `>=`, `^=`, `$=`, `~=`
+- `LIKE`, `NOT LIKE`, `ILIKE`, `NOT ILIKE`
 - `IN`, `NOT IN`
 - `BETWEEN`, `NOT BETWEEN`
 - `IS NULL`, `IS NOT NULL`
@@ -22,6 +22,17 @@ Supported features:
 - Positional parameters: `?1`, `?2`
 - Named parameters: `:minAge`, `:status`
 
+**Notes:**
+
+Operators `^=`, `$=`, `~=` are specifically targeted at comparing strings.
+   They are evaluated as described in the following table:
+
+|Expression|Interpretation|Translated as|
+|-|-|-|
+|`a ^= b`|a _starts with_ b|`a ilike (b + '%')`|
+|`a ~= b`|a _contains_ b|`a ilike ('%' + b + '%')`|
+|`a $= b`|a _ends with_ b|`a ilike ('%' + b)`|
+
 Examples:
 
 ```hql
@@ -33,6 +44,7 @@ customer.address.city = 'Quebec'
 (age >= 18 AND active = true) OR status = 'ADMIN'
 age BETWEEN ?1 AND ?2 AND status = ?3
 age BETWEEN :minAge AND :maxAge AND status = :status
+jobTitle ~= 'accountant' AND department ^= 'it'
 ```
 
 Operator precedence:
