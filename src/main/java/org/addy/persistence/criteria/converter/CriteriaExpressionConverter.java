@@ -93,12 +93,15 @@ public final class CriteriaExpressionConverter {
             boolean caseInsensitive,
             boolean negate) {
 
+        javax.persistence.criteria.Expression<String> stringExp = stringExpression(path);
+        if (caseInsensitive) stringExp = criteriaBuilder.upper(stringExp);
+
         String pattern = String.valueOf(convert(valueExpression, attribute));
         if (caseInsensitive) pattern = pattern.toUpperCase();
         if (prefix != null) pattern = prefix + pattern;
         if (suffix != null) pattern += suffix;
 
-        Predicate predicate = criteriaBuilder.like(stringExpression(path), pattern);
+        Predicate predicate = criteriaBuilder.like(stringExp, pattern);
         return negate ? criteriaBuilder.not(predicate) : predicate;
     }
 
