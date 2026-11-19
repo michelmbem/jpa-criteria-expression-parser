@@ -56,41 +56,30 @@ public final class CriteriaExpressionConverter {
     }
 
     private Predicate convertComparison(ComparisonExpression expression, From<?, ?> root) {
-        Path<?> path = pathResolver.resolve(
-                root, expression.getProperty().getPath());
-
-        Attribute<?, ?> attribute = resolveAttribute(
-                root.getJavaType(), expression.getProperty().getPath());
+        Path<?> path = pathResolver.resolve(root, expression.getProperty().getPath());
+        Attribute<?, ?> attribute = resolveAttribute(root.getJavaType(),
+                expression.getProperty().getPath());
 
         switch (expression.getOperator()) {
             case IS_NULL: return criteriaBuilder.isNull(path);
             case IS_NOT_NULL: return criteriaBuilder.isNotNull(path);
-            case EQ: return criteriaBuilder.equal(
-                    path, convert(expression.getValue(), attribute));
-            case NE: return criteriaBuilder.notEqual(
-                    path, convert(expression.getValue(), attribute));
-            case LT: return compare(
-                    path, attribute, expression.getValue(), ComparisonOperator.LT);
-            case LE: return compare(
-                    path, attribute, expression.getValue(), ComparisonOperator.LE);
-            case GT: return compare(
-                    path, attribute, expression.getValue(), ComparisonOperator.GT);
-            case GE: return compare(
-                    path, attribute, expression.getValue(), ComparisonOperator.GE);
+            case EQ: return criteriaBuilder.equal(path, convert(expression.getValue(), attribute));
+            case NE: return criteriaBuilder.notEqual(path, convert(expression.getValue(), attribute));
+            case LT: return compare(path, attribute, expression.getValue(), ComparisonOperator.LT);
+            case LE: return compare(path, attribute, expression.getValue(), ComparisonOperator.LE);
+            case GT: return compare(path, attribute, expression.getValue(), ComparisonOperator.GT);
+            case GE: return compare(path, attribute, expression.getValue(), ComparisonOperator.GE);
             case LIKE: return criteriaBuilder.like(
-                    stringExpression(path),
-                    String.valueOf(convert(expression.getValue(), attribute)));
+                    criteriaBuilder.upper(stringExpression(path)),
+                    String.valueOf(convert(expression.getValue(), attribute)).toUpperCase());
             case NOT_LIKE: return criteriaBuilder.not(criteriaBuilder.like(
-                    stringExpression(path),
-                    String.valueOf(convert(expression.getValue(), attribute))));
-            case IN: return createIn(
-                    path, attribute, (ListExpression) expression.getValue(), false);
-            case NOT_IN:return createIn(
-                    path, attribute, (ListExpression) expression.getValue(), true);
+                    criteriaBuilder.upper(stringExpression(path)),
+                    String.valueOf(convert(expression.getValue(), attribute)).toUpperCase()));
+            case IN: return createIn(path, attribute, (ListExpression) expression.getValue(), false);
+            case NOT_IN:return createIn(path, attribute, (ListExpression) expression.getValue(), true);
             case BETWEEN: return createBetween(path, attribute, expression, false);
             case NOT_BETWEEN: return createBetween(path, attribute, expression, true);
-            default: throw new IllegalStateException(
-                    "Unsupported operator: " + expression.getOperator());
+            default: throw new IllegalStateException("Unsupported operator: " + expression.getOperator());
         }
     }
 
@@ -198,27 +187,20 @@ public final class CriteriaExpressionConverter {
         return ValueConverter.convertForAttribute(raw, attribute);
     }
 
-    private Attribute<?, ?> resolveAttribute(
-            Class<?> rootType,
-            String pathExpression) {
-
+    private Attribute<?, ?> resolveAttribute(Class<?> rootType, String pathExpression) {
         String[] parts = pathExpression.split("\\.");
         Class<?> currentType = rootType;
         Attribute<?, ?> attribute = null;
 
         for (int i = 0; i < parts.length; i++) {
-            ManagedType<?> managedType = entityManager
-                    .getMetamodel()
+            ManagedType<?> managedType = entityManager.getMetamodel()
                     .managedType(currentType);
 
             try {
                 attribute = managedType.getAttribute(parts[i]);
             } catch (IllegalArgumentException e) {
-                throw new IllegalArgumentException("Unknown property '"
-                        + parts[i]
-                        + "' in path '"
-                        + pathExpression
-                        + "'",
+                throw new IllegalArgumentException(
+                        "Unknown property '" + parts[i] + "' in path '" + pathExpression + "'",
                         e);
             }
 
@@ -237,10 +219,6 @@ public final class CriteriaExpressionConverter {
     }
 
     private Class<?> box(Class<?> type) {
-        if (!type.isPrimitive()) {
-            return type;
-        }
-
         if (type == byte.class) return Byte.class;
         if (type == short.class) return Short.class;
         if (type == int.class) return Integer.class;
@@ -249,7 +227,6 @@ public final class CriteriaExpressionConverter {
         if (type == double.class) return Double.class;
         if (type == boolean.class) return Boolean.class;
         if (type == char.class) return Character.class;
-
         return type;
     }
 
